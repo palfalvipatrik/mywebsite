@@ -273,6 +273,11 @@ if (phoneLink) {
     return "+" + parts.a + parts.b + parts.c + parts.d + parts.e;
   }
 
+  const zumbaPhoneLink = document.getElementById("zumbaPhoneLink");
+  if (zumbaPhoneLink) {
+    zumbaPhoneLink.href = "tel:" + getPhone();
+  }
+
   setupContactLink(
     phoneLink,
     document.getElementById("phoneText"),
@@ -284,6 +289,47 @@ if (phoneLink) {
   );
 }
 
+const zumbaCountdown = document.getElementById("zumbaCountdown");
+const zumbaCountdownDone = document.getElementById("zumbaCountdownDone");
+
+if (zumbaCountdown && zumbaCountdownDone) {
+  // Budapest is on CET (UTC+01:00) on 5 November 2026.
+  const firstZumbaClass = new Date("2026-11-05T18:00:00+01:00").getTime();
+  const countdownFields = {
+    days: zumbaCountdown.querySelector('[data-countdown="days"]'),
+    hours: zumbaCountdown.querySelector('[data-countdown="hours"]'),
+    minutes: zumbaCountdown.querySelector('[data-countdown="minutes"]'),
+    seconds: zumbaCountdown.querySelector('[data-countdown="seconds"]'),
+  };
+  let countdownInterval;
+
+  function updateZumbaCountdown() {
+    const millisecondsLeft = firstZumbaClass - Date.now();
+
+    if (millisecondsLeft <= 0) {
+      zumbaCountdown.hidden = true;
+      zumbaCountdownDone.hidden = false;
+      clearInterval(countdownInterval);
+      return;
+    }
+
+    const totalSeconds = Math.ceil(millisecondsLeft / 1000);
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    countdownFields.days.textContent = String(days);
+    countdownFields.hours.textContent = String(hours).padStart(2, "0");
+    countdownFields.minutes.textContent = String(minutes).padStart(2, "0");
+    countdownFields.seconds.textContent = String(seconds).padStart(2, "0");
+  }
+
+  updateZumbaCountdown();
+  if (!zumbaCountdown.hidden) {
+    countdownInterval = setInterval(updateZumbaCountdown, 1000);
+  }
+}
 const contactForm = document.getElementById("contactForm");
 const formStatus = document.getElementById("formStatus");
 if (contactForm && formStatus) {

@@ -59,7 +59,7 @@
     items
       .map(
         (item) =>
-          `<li><a href="${item.href}" data-nav="${item.nav}"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${item.icon}</svg></span>${item.label}</a></li>`
+          `<li><a href="${item.href}" data-nav="${item.nav}"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${item.icon}</svg></span>${item.label}${item.nav === "zumba" || item.nav === "hirek" ? '<span class="nav-new-badge" aria-hidden="true">ÚJ</span>' : ""}</a></li>`
       )
       .join("") +
     `<li class="nav-links-cta"><a href="${ctaHref}">Írj nekem</a></li>`;

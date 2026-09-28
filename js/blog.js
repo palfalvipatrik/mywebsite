@@ -27,7 +27,7 @@ function renderNewsList(root) {
       const posts = (Array.isArray(data.posts) ? data.posts : []).filter(
         (post) => post && SAFE_SLUG.test(cleanSlug(post.slug))
       );
-      const sorted = posts.slice().sort((a, b) => (a.date < b.date ? 1 : -1));
+      const sorted = posts.slice().sort((a, b) => String(b.date).localeCompare(String(a.date)));
       const slice = limit > 0 ? sorted.slice(0, limit) : sorted;
 
       if (!slice.length) return;

@@ -21,9 +21,9 @@
     {
       "@type": "ProfessionalService",
       "@id": "https://palfalvipatrik.hu/#zumba-service",
-      "name": "Pálfalvi Patrik – Zumba® oktatás",
+      "name": "Pálfalvi Patrik - Zumba® oktatás",
       "url": "https://palfalvipatrik.hu/#zumba",
-      "description": "Hivatalos Zumba® Instructor – tánc, mozgás és életöröm.",
+      "description": "Hivatalos Zumba® Instructor - tánc, mozgás és életöröm.",
       "areaServed": { "@type": "Country", "name": "Magyarország" },
       "provider": { "@id": "https://palfalvipatrik.hu/#person" }
     }
