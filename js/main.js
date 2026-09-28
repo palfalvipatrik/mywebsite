@@ -4,11 +4,8 @@ const galleries = {
     { src: "assets/g02.webp", caption: "Zumba fellépésem" },
     { src: "assets/g03.webp", caption: "Már kicsiként is szerettem" },
     { src: "assets/g04.webp", caption: "Kép a társammal, a fellépés után. :)" },
-    {
-      src: "assets/certificate.webp",
-      caption: "Zumba® Instructor oklevél - 2025",
-    },
-  ],
+    { src: "assets/certificate.webp", caption: "Zumba® Instructor oklevél - 2025" }
+  ]
 };
 
 const lb = document.getElementById("lightbox");
@@ -72,10 +69,7 @@ if (lb) {
       if (e.shiftKey) {
         nextIdx = currentIdx <= 0 ? lbFocusable.length - 1 : currentIdx - 1;
       } else {
-        nextIdx =
-          currentIdx === -1 || currentIdx === lbFocusable.length - 1
-            ? 0
-            : currentIdx + 1;
+        nextIdx = currentIdx === -1 || currentIdx === lbFocusable.length - 1 ? 0 : currentIdx + 1;
       }
       e.preventDefault();
       lbFocusable[nextIdx].focus();
@@ -83,8 +77,7 @@ if (lb) {
   });
 
   document.querySelectorAll(".g-item[data-group]").forEach((item) => {
-    const trigger = () =>
-      window.openLightbox(item.dataset.group, Number(item.dataset.index));
+    const trigger = () => window.openLightbox(item.dataset.group, Number(item.dataset.index));
     item.addEventListener("click", trigger);
     item.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") {
@@ -116,35 +109,23 @@ if (toggle && links) {
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && links.classList.contains("open")) closeMenu();
   });
-  links
-    .querySelectorAll("a")
-    .forEach((a) => a.addEventListener("click", closeMenu));
+  links.querySelectorAll("a").forEach((a) => a.addEventListener("click", closeMenu));
 }
 
 const navItems = document.querySelectorAll(".nav-links a[data-nav]");
 if (navItems.length) {
-  const sections = [
-    "top",
-    "rolam",
-    "zumba",
-    "asmr",
-    "munkam",
-    "hirek",
-    "social",
-  ]
+  const sections = ["top", "rolam", "zumba", "asmr", "munkam", "hirek", "social"]
     .map((id) => document.getElementById(id))
     .filter(Boolean);
   const spy = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          navItems.forEach((a) =>
-            a.classList.toggle("active", a.dataset.nav === entry.target.id),
-          );
+          navItems.forEach((a) => a.classList.toggle("active", a.dataset.nav === entry.target.id));
         }
       });
     },
-    { rootMargin: "-40% 0px -55% 0px", threshold: 0 },
+    { rootMargin: "-40% 0px -55% 0px", threshold: 0 }
   );
   sections.forEach((s) => spy.observe(s));
 }
@@ -160,7 +141,7 @@ async function copyText(text) {
   try {
     await navigator.clipboard.writeText(text);
     return true;
-  } catch (err) {}
+  } catch (err) { }
   try {
     const area = document.createElement("textarea");
     area.value = text;
@@ -177,8 +158,33 @@ async function copyText(text) {
   }
 }
 
-function setupContactLink(link, textEl, scheme, getValue, format) {
+const COPY_ICONS =
+  '<svg class="ic-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
+  '<svg class="ic-ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+function addCopyButton(link, label, getValue) {
+  const item = document.createElement("span");
+  item.className = "contact-item";
+  link.replaceWith(item);
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "copy-btn";
+  btn.setAttribute("aria-label", label);
+  btn.title = label;
+  btn.innerHTML = COPY_ICONS;
+  item.append(link, btn);
+  let timer;
+  btn.addEventListener("click", async () => {
+    if (!(await copyText(getValue()))) return;
+    btn.classList.add("copied");
+    clearTimeout(timer);
+    timer = setTimeout(() => btn.classList.remove("copied"), 1800);
+  });
+}
+
+function setupContactLink(link, textEl, scheme, getValue, format, copyLabel) {
   if (!link || !textEl) return;
+  addCopyButton(link, copyLabel, getValue);
   let resetTimer;
   let revealed = false;
   link.addEventListener("click", function (e) {
@@ -223,6 +229,8 @@ if (emailLink) {
     document.getElementById("emailText"),
     "mailto:",
     () => emailLink.dataset.u + "@" + emailLink.dataset.d,
+    null,
+    "E-mail cím másolása"
   );
 }
 
@@ -233,8 +241,8 @@ if (phoneLink) {
     document.getElementById("phoneText"),
     "tel:",
     () => phoneLink.dataset.p,
-    (num) =>
-      num.replace("+36", "+36 ").replace(/(\d{2})(\d{3})(\d{4})$/, "$1 $2 $3"),
+    (num) => num.replace("+36", "+36 ").replace(/(\d{2})(\d{3})(\d{4})$/, "$1 $2 $3"),
+    "Telefonszám másolása"
   );
 }
 
@@ -256,20 +264,18 @@ if (contactForm && formStatus) {
       const res = await fetch(contactForm.action, {
         method: "POST",
         body: data,
-        headers: { Accept: "application/json" },
+        headers: { Accept: "application/json" }
       });
       if (res.ok) {
         formStatus.textContent = "Köszönöm az üzenetet! Hamarosan válaszolok.";
         formStatus.classList.add("ok");
         contactForm.reset();
       } else {
-        formStatus.textContent =
-          "Hiba történt a küldés közben - próbáld újra, vagy írj e-mailt.";
+        formStatus.textContent = "Hiba történt a küldés közben - próbáld újra, vagy írj e-mailt.";
         formStatus.classList.add("err");
       }
     } catch (err) {
-      formStatus.textContent =
-        "Hiba történt a küldés közben - próbáld újra, vagy írj e-mailt.";
+      formStatus.textContent = "Hiba történt a küldés közben - próbáld újra, vagy írj e-mailt.";
       formStatus.classList.add("err");
     }
   });
