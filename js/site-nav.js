@@ -5,8 +5,7 @@
 
   const prefix = document.body.dataset.navPrefix || "";
   const onSubpage = Boolean(prefix);
-  const page = prefix + "index.html";
-  const sectionHref = (id) => (onSubpage ? page + id : id);
+  const sectionHref = (id) => (onSubpage ? prefix + id : id);
 
   if (logo) logo.setAttribute("href", sectionHref("#top"));
 

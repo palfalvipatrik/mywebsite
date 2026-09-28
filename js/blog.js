@@ -7,8 +7,9 @@ function escapeHtml(value) {
     .replace(/'/g, "&#39;");
 }
 
-/* Csak egyszerű fájlnevet engedünk (pl. megujult-az-oldalam.html): se "/", se ":", se szóköz. */
-const SAFE_SLUG = /^[A-Za-z0-9][A-Za-z0-9._-]*\.html$/;
+/* Csak egyszerű azonosítót engedünk (pl. megujult-az-oldalam): se "/", se ".", se ":", se szóköz. */
+const SAFE_SLUG = /^[A-Za-z0-9][A-Za-z0-9-]*$/;
+const cleanSlug = (slug) => String(slug).replace(/\.html$/, "");
 
 function renderNewsList(root) {
   const src = root.dataset.posts;
@@ -24,7 +25,7 @@ function renderNewsList(root) {
     })
     .then((data) => {
       const posts = (Array.isArray(data.posts) ? data.posts : []).filter(
-        (post) => post && SAFE_SLUG.test(String(post.slug))
+        (post) => post && SAFE_SLUG.test(cleanSlug(post.slug))
       );
       const sorted = posts.slice().sort((a, b) => (a.date < b.date ? 1 : -1));
       const slice = limit > 0 ? sorted.slice(0, limit) : sorted;
@@ -36,7 +37,7 @@ function renderNewsList(root) {
           (post) => `
         <li class="news-item">
           <time class="news-date" datetime="${escapeHtml(post.date)}">${escapeHtml(post.dateLabel)}</time>
-          <h3 class="news-title"><a href="${escapeHtml(prefix)}${escapeHtml(post.slug)}">${escapeHtml(post.title)}</a></h3>
+          <h3 class="news-title"><a href="${escapeHtml(prefix)}${escapeHtml(cleanSlug(post.slug))}/">${escapeHtml(post.title)}</a></h3>
           <p class="news-excerpt">${escapeHtml(post.excerpt)}</p>
         </li>`
         )
