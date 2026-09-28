@@ -1,0 +1,31 @@
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Person",
+      "@id": "https://palfalvipatrik.hu/#person",
+      "name": "Pálfalvi Patrik",
+      "url": "https://palfalvipatrik.hu/",
+      "image": "https://palfalvipatrik.hu/assets/profile.webp",
+      "jobTitle": "Zumba oktató",
+      "knowsAbout": ["Zumba", "ASMR", "Network marketing", "Tartalomgyártás"],
+      "nationality": { "@type": "Country", "name": "Magyarország" },
+      "areaServed": { "@type": "Country", "name": "Magyarország" },
+      "sameAs": [
+        "https://www.youtube.com/@palfalvipatrik4115",
+        "https://www.youtube.com/@patrikasmr4140",
+        "https://www.instagram.com/p.__.patrik/",
+        "https://www.facebook.com/profile.php?id=61562793493929"
+      ]
+    },
+    {
+      "@type": "ProfessionalService",
+      "@id": "https://palfalvipatrik.hu/#zumba-service",
+      "name": "Pálfalvi Patrik – Zumba® oktatás",
+      "url": "https://palfalvipatrik.hu/#zumba",
+      "description": "Hivatalos Zumba® Instructor – tánc, mozgás és életöröm.",
+      "areaServed": { "@type": "Country", "name": "Magyarország" },
+      "provider": { "@id": "https://palfalvipatrik.hu/#person" }
+    }
+  ]
+}
