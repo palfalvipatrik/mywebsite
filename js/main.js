@@ -183,37 +183,53 @@ function addCopyButton(link, label, getValue) {
 }
 
 function setupContactLink(link, textEl, scheme, getValue, format, copyLabel) {
-  if (!link || !textEl) return;
-  addCopyButton(link, copyLabel, getValue);
+  if (!link || !textEl) {
+    return;
+  }
+
   let resetTimer;
   let revealed = false;
+
   link.addEventListener("click", function (e) {
     e.preventDefault();
+
     const value = getValue();
     const shown = format ? format(value) : value;
 
     if (!revealed) {
       revealed = true;
+
       textEl.textContent = shown;
       link.href = scheme + value;
+      addCopyButton(link, copyLabel, getValue);
+
       return;
     }
 
     let left = false;
+
     const mark = () => {
       left = true;
     };
+
     window.addEventListener("blur", mark);
     document.addEventListener("visibilitychange", mark);
+
     window.location.href = scheme + value;
 
     setTimeout(async () => {
       window.removeEventListener("blur", mark);
       document.removeEventListener("visibilitychange", mark);
-      if (left) return;
+
+      if (left) {
+        return;
+      }
+
       if (await copyText(value)) {
         textEl.textContent = "Vágólapra másolva ✓";
+
         clearTimeout(resetTimer);
+
         resetTimer = setTimeout(() => {
           textEl.textContent = shown;
         }, 2500);
@@ -223,26 +239,48 @@ function setupContactLink(link, textEl, scheme, getValue, format, copyLabel) {
 }
 
 const emailLink = document.getElementById("emailLink");
+
 if (emailLink) {
+  const getEmail = () => {
+    const part = (name) =>
+      emailLink.querySelector(`[data-${name}]`)?.getAttribute(`data-${name}`) ?? "";
+
+    return part("b") + "." + part("k") + part("v") + "@" + part("r") + part("q");
+  };
+
   setupContactLink(
     emailLink,
     document.getElementById("emailText"),
     "mailto:",
-    () => emailLink.dataset.u + "@" + emailLink.dataset.d,
+    getEmail,
     null,
-    "E-mail cím másolása"
+    "E-mail cím másolása",
   );
 }
 
 const phoneLink = document.getElementById("phoneLink");
+
 if (phoneLink) {
+  function getPhone() {
+    const parts = {
+      a: phoneLink.querySelector("[data-m]")?.dataset.m,
+      b: phoneLink.querySelector("[data-b]")?.dataset.b,
+      c: phoneLink.querySelector("[data-r]")?.dataset.r,
+      d: phoneLink.querySelector("[data-x]")?.dataset.x,
+      e: phoneLink.querySelector("[data-q]")?.dataset.q,
+    };
+
+    return "+" + parts.a + parts.b + parts.c + parts.d + parts.e;
+  }
+
   setupContactLink(
     phoneLink,
     document.getElementById("phoneText"),
     "tel:",
-    () => phoneLink.dataset.p,
-    (num) => num.replace("+36", "+36 ").replace(/(\d{2})(\d{3})(\d{4})$/, "$1 $2 $3"),
-    "Telefonszám másolása"
+    getPhone,
+    (num) =>
+      num.replace("+36", "+36 ").replace(/(\d{2})(\d{3})(\d{4})$/, "$1 $2 $3"),
+    "Telefonszám másolása",
   );
 }
 
