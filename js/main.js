@@ -156,110 +156,87 @@ if (toTop) {
   });
 }
 
-function copyText(text) {
-  if (navigator.clipboard && window.isSecureContext) {
-    return navigator.clipboard.writeText(text);
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (err) {}
+  try {
+    const area = document.createElement("textarea");
+    area.value = text;
+    area.setAttribute("readonly", "");
+    area.style.position = "fixed";
+    area.style.opacity = "0";
+    document.body.appendChild(area);
+    area.select();
+    const ok = document.execCommand("copy");
+    area.remove();
+    return ok;
+  } catch (err) {
+    return false;
   }
-  return new Promise(function (resolve, reject) {
-    const ta = document.createElement("textarea");
-    ta.value = text;
-    ta.setAttribute("readonly", "");
-    ta.className = "visually-hidden";
-    document.body.appendChild(ta);
-    ta.select();
-    ta.setSelectionRange(0, text.length);
-    let ok = false;
-    try {
-      ok = document.execCommand("copy");
-    } catch (err) {
-      ok = false;
-    }
-    document.body.removeChild(ta);
-    if (ok) resolve();
-    else reject(new Error("copy failed"));
-  });
 }
 
-function setupContact(linkId, textId, getValue, ariaPrefix) {
-  const link = document.getElementById(linkId);
-  const text = document.getElementById(textId);
-  if (!link || !text) return;
-
-  const item = document.createElement("span");
-  item.className = "contact-item";
-  link.parentNode.insertBefore(item, link);
-  item.appendChild(link);
-
-  const copyBtn = document.createElement("button");
-  copyBtn.type = "button";
-  copyBtn.className = "copy-btn";
-  copyBtn.textContent = "Másolás";
-  copyBtn.hidden = true;
-  item.appendChild(copyBtn);
-
-  link.draggable = false;
+function setupContactLink(link, textEl, scheme, getValue, format) {
+  if (!link || !textEl) return;
+  let resetTimer;
   let revealed = false;
-  let shown = "";
-
   link.addEventListener("click", function (e) {
+    e.preventDefault();
+    const value = getValue();
+    const shown = format ? format(value) : value;
+
     if (!revealed) {
-      // 1. kattintás: csak megjelenítjük, nem indítunk mailto:/tel: hivatkozást
-      e.preventDefault();
-      const value = getValue(link);
-      shown = value.display;
-      link.href = value.href;
-      link.setAttribute("aria-label", ariaPrefix + shown);
-      text.textContent = shown;
-      copyBtn.hidden = false;
       revealed = true;
+      textEl.textContent = shown;
+      link.href = scheme + value;
       return;
     }
-    // 2. kattintás: mehet a mailto:/tel:, kivéve ha a felhasználó éppen szöveget jelölt ki a linkben
-    const sel = window.getSelection();
-    if (sel && sel.toString() !== "" && link.contains(sel.anchorNode)) {
-      e.preventDefault();
-    }
-  });
 
-  copyBtn.addEventListener("click", function () {
-    copyText(shown).then(
-      function () {
-        copyBtn.textContent = "Kimásolva";
-      },
-      function () {
-        copyBtn.textContent = "Nem sikerült";
-      },
-    );
-    setTimeout(function () {
-      copyBtn.textContent = "Másolás";
-    }, 1800);
+    let left = false;
+    const mark = () => {
+      left = true;
+    };
+    window.addEventListener("blur", mark);
+    document.addEventListener("visibilitychange", mark);
+    window.location.href = scheme + value;
+
+    setTimeout(async () => {
+      window.removeEventListener("blur", mark);
+      document.removeEventListener("visibilitychange", mark);
+      if (left) return;
+      if (await copyText(value)) {
+        textEl.textContent = "Vágólapra másolva ✓";
+        clearTimeout(resetTimer);
+        resetTimer = setTimeout(() => {
+          textEl.textContent = shown;
+        }, 2500);
+      }
+    }, 1200);
   });
 }
 
-setupContact(
-  "emailLink",
-  "emailText",
-  function (link) {
-    const addr = link.dataset.u + "@" + link.dataset.d;
-    return { display: addr, href: "mailto:" + addr };
-  },
-  "E-mail írása: ",
-);
+const emailLink = document.getElementById("emailLink");
+if (emailLink) {
+  setupContactLink(
+    emailLink,
+    document.getElementById("emailText"),
+    "mailto:",
+    () => emailLink.dataset.u + "@" + emailLink.dataset.d,
+  );
+}
 
-setupContact(
-  "phoneLink",
-  "phoneText",
-  function (link) {
-    const num = link.dataset.p;
-    return {
-      display: num
-        .replace("+36", "+36 ")
-        .replace(/(\d{2})(\d{3})(\d{4})$/, "$1 $2 $3"),
-      href: "tel:" + num,
-    };
-  },
-  "Telefonhívás: ",
-);
+const phoneLink = document.getElementById("phoneLink");
+if (phoneLink) {
+  setupContactLink(
+    phoneLink,
+    document.getElementById("phoneText"),
+    "tel:",
+    () => phoneLink.dataset.p,
+    (num) =>
+      num.replace("+36", "+36 ").replace(/(\d{2})(\d{3})(\d{4})$/, "$1 $2 $3"),
+  );
+}
 
 const contactForm = document.getElementById("contactForm");
 const formStatus = document.getElementById("formStatus");
