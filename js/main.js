@@ -137,26 +137,79 @@ if (toTop) {
   });
 }
 
-const emailLink = document.getElementById("emailLink");
-const emailText = document.getElementById("emailText");
-if (emailLink && emailText) {
-  emailLink.addEventListener("click", function (e) {
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (err) {}
+  try {
+    const area = document.createElement("textarea");
+    area.value = text;
+    area.setAttribute("readonly", "");
+    area.style.position = "fixed";
+    area.style.opacity = "0";
+    document.body.appendChild(area);
+    area.select();
+    const ok = document.execCommand("copy");
+    area.remove();
+    return ok;
+  } catch (err) {
+    return false;
+  }
+}
+
+function setupContactLink(link, textEl, scheme, getValue, format) {
+  if (!link || !textEl) return;
+  let resetTimer;
+  link.addEventListener("click", function (e) {
     e.preventDefault();
-    const addr = emailLink.dataset.u + "@" + emailLink.dataset.d;
-    emailLink.href = "mailto:" + addr;
-    emailText.textContent = addr;
+    const value = getValue();
+    const shown = format ? format(value) : value;
+    textEl.textContent = shown;
+    link.href = scheme + value;
+
+    let left = false;
+    const mark = () => {
+      left = true;
+    };
+    window.addEventListener("blur", mark);
+    document.addEventListener("visibilitychange", mark);
+    window.location.href = scheme + value;
+
+    setTimeout(async () => {
+      window.removeEventListener("blur", mark);
+      document.removeEventListener("visibilitychange", mark);
+      if (left) return;
+      if (await copyText(value)) {
+        textEl.textContent = "Vágólapra másolva ✓";
+        clearTimeout(resetTimer);
+        resetTimer = setTimeout(() => {
+          textEl.textContent = shown;
+        }, 2500);
+      }
+    }, 1200);
   });
 }
 
+const emailLink = document.getElementById("emailLink");
+if (emailLink) {
+  setupContactLink(
+    emailLink,
+    document.getElementById("emailText"),
+    "mailto:",
+    () => emailLink.dataset.u + "@" + emailLink.dataset.d
+  );
+}
+
 const phoneLink = document.getElementById("phoneLink");
-const phoneText = document.getElementById("phoneText");
-if (phoneLink && phoneText) {
-  phoneLink.addEventListener("click", function (e) {
-    e.preventDefault();
-    const num = phoneLink.dataset.p;
-    phoneLink.href = "tel:" + num;
-    phoneText.textContent = num.replace("+36", "+36 ").replace(/(\d{2})(\d{3})(\d{4})$/, "$1 $2 $3");
-  });
+if (phoneLink) {
+  setupContactLink(
+    phoneLink,
+    document.getElementById("phoneText"),
+    "tel:",
+    () => phoneLink.dataset.p,
+    (num) => num.replace("+36", "+36 ").replace(/(\d{2})(\d{3})(\d{4})$/, "$1 $2 $3")
+  );
 }
 
 const contactForm = document.getElementById("contactForm");

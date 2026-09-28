@@ -64,6 +64,14 @@
       .join("") +
     `<li class="nav-links-cta"><a href="${ctaHref}">Írj nekem</a></li>`;
 
+  if (document.body.classList.contains("blog-page")) {
+    const current = ul.querySelector('a[data-nav="hirek"]');
+    if (current) {
+      current.classList.add("active");
+      current.setAttribute("aria-current", "page");
+    }
+  }
+
   const ctaBtn = document.querySelector(".nav-cta");
   if (ctaBtn) ctaBtn.setAttribute("href", ctaHref);
 })();
