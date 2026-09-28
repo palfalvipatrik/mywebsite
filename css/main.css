@@ -89,3 +89,9 @@
 @media (max-width:700px) { .munkam-contact { padding-bottom: 56px; } }
 
 @media (max-width:700px) { .hero-art:not(.hero-art-faint) { object-position: left bottom; } }
+
+/* Topbar: e-mail / telefon és a Másolás gomb */
+.contact-item { display: inline-flex; align-items: center; gap: 8px; }
+.copy-btn { font: inherit; font-size: 12px; font-weight: 600; color: #e7ebf1; background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .25); border-radius: 999px; padding: 3px 10px; cursor: pointer; transition: background .15s ease, color .15s ease; }
+.copy-btn:hover { background: var(--accent-dark); border-color: transparent; color: #fff; }
+.copy-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

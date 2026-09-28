@@ -4,8 +4,11 @@ const galleries = {
     { src: "assets/g02.webp", caption: "Zumba fellépésem" },
     { src: "assets/g03.webp", caption: "Már kicsiként is szerettem" },
     { src: "assets/g04.webp", caption: "Kép a társammal, a fellépés után. :)" },
-    { src: "assets/certificate.webp", caption: "Zumba® Instructor oklevél - 2025" }
-  ]
+    {
+      src: "assets/certificate.webp",
+      caption: "Zumba® Instructor oklevél - 2025",
+    },
+  ],
 };
 
 const lb = document.getElementById("lightbox");
@@ -69,7 +72,10 @@ if (lb) {
       if (e.shiftKey) {
         nextIdx = currentIdx <= 0 ? lbFocusable.length - 1 : currentIdx - 1;
       } else {
-        nextIdx = currentIdx === -1 || currentIdx === lbFocusable.length - 1 ? 0 : currentIdx + 1;
+        nextIdx =
+          currentIdx === -1 || currentIdx === lbFocusable.length - 1
+            ? 0
+            : currentIdx + 1;
       }
       e.preventDefault();
       lbFocusable[nextIdx].focus();
@@ -77,7 +83,8 @@ if (lb) {
   });
 
   document.querySelectorAll(".g-item[data-group]").forEach((item) => {
-    const trigger = () => window.openLightbox(item.dataset.group, Number(item.dataset.index));
+    const trigger = () =>
+      window.openLightbox(item.dataset.group, Number(item.dataset.index));
     item.addEventListener("click", trigger);
     item.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") {
@@ -109,23 +116,35 @@ if (toggle && links) {
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && links.classList.contains("open")) closeMenu();
   });
-  links.querySelectorAll("a").forEach((a) => a.addEventListener("click", closeMenu));
+  links
+    .querySelectorAll("a")
+    .forEach((a) => a.addEventListener("click", closeMenu));
 }
 
 const navItems = document.querySelectorAll(".nav-links a[data-nav]");
 if (navItems.length) {
-  const sections = ["top", "rolam", "zumba", "asmr", "munkam", "hirek", "social"]
+  const sections = [
+    "top",
+    "rolam",
+    "zumba",
+    "asmr",
+    "munkam",
+    "hirek",
+    "social",
+  ]
     .map((id) => document.getElementById(id))
     .filter(Boolean);
   const spy = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
-          navItems.forEach((a) => a.classList.toggle("active", a.dataset.nav === entry.target.id));
+          navItems.forEach((a) =>
+            a.classList.toggle("active", a.dataset.nav === entry.target.id),
+          );
         }
       });
     },
-    { rootMargin: "-40% 0px -55% 0px", threshold: 0 }
+    { rootMargin: "-40% 0px -55% 0px", threshold: 0 },
   );
   sections.forEach((s) => spy.observe(s));
 }
@@ -137,80 +156,110 @@ if (toTop) {
   });
 }
 
-async function copyText(text) {
-  try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch (err) {}
-  try {
-    const area = document.createElement("textarea");
-    area.value = text;
-    area.setAttribute("readonly", "");
-    area.style.position = "fixed";
-    area.style.opacity = "0";
-    document.body.appendChild(area);
-    area.select();
-    const ok = document.execCommand("copy");
-    area.remove();
-    return ok;
-  } catch (err) {
-    return false;
+function copyText(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    return navigator.clipboard.writeText(text);
   }
-}
-
-function setupContactLink(link, textEl, scheme, getValue, format) {
-  if (!link || !textEl) return;
-  let resetTimer;
-  link.addEventListener("click", function (e) {
-    e.preventDefault();
-    const value = getValue();
-    const shown = format ? format(value) : value;
-    textEl.textContent = shown;
-    link.href = scheme + value;
-
-    let left = false;
-    const mark = () => {
-      left = true;
-    };
-    window.addEventListener("blur", mark);
-    document.addEventListener("visibilitychange", mark);
-    window.location.href = scheme + value;
-
-    setTimeout(async () => {
-      window.removeEventListener("blur", mark);
-      document.removeEventListener("visibilitychange", mark);
-      if (left) return;
-      if (await copyText(value)) {
-        textEl.textContent = "Vágólapra másolva ✓";
-        clearTimeout(resetTimer);
-        resetTimer = setTimeout(() => {
-          textEl.textContent = shown;
-        }, 2500);
-      }
-    }, 1200);
+  return new Promise(function (resolve, reject) {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.className = "visually-hidden";
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    let ok = false;
+    try {
+      ok = document.execCommand("copy");
+    } catch (err) {
+      ok = false;
+    }
+    document.body.removeChild(ta);
+    if (ok) resolve();
+    else reject(new Error("copy failed"));
   });
 }
 
-const emailLink = document.getElementById("emailLink");
-if (emailLink) {
-  setupContactLink(
-    emailLink,
-    document.getElementById("emailText"),
-    "mailto:",
-    () => emailLink.dataset.u + "@" + emailLink.dataset.d
-  );
+function setupContact(linkId, textId, getValue, ariaPrefix) {
+  const link = document.getElementById(linkId);
+  const text = document.getElementById(textId);
+  if (!link || !text) return;
+
+  const item = document.createElement("span");
+  item.className = "contact-item";
+  link.parentNode.insertBefore(item, link);
+  item.appendChild(link);
+
+  const copyBtn = document.createElement("button");
+  copyBtn.type = "button";
+  copyBtn.className = "copy-btn";
+  copyBtn.textContent = "Másolás";
+  copyBtn.hidden = true;
+  item.appendChild(copyBtn);
+
+  link.draggable = false;
+  let revealed = false;
+  let shown = "";
+
+  link.addEventListener("click", function (e) {
+    if (!revealed) {
+      // 1. kattintás: csak megjelenítjük, nem indítunk mailto:/tel: hivatkozást
+      e.preventDefault();
+      const value = getValue(link);
+      shown = value.display;
+      link.href = value.href;
+      link.setAttribute("aria-label", ariaPrefix + shown);
+      text.textContent = shown;
+      copyBtn.hidden = false;
+      revealed = true;
+      return;
+    }
+    // 2. kattintás: mehet a mailto:/tel:, kivéve ha a felhasználó éppen szöveget jelölt ki a linkben
+    const sel = window.getSelection();
+    if (sel && sel.toString() !== "" && link.contains(sel.anchorNode)) {
+      e.preventDefault();
+    }
+  });
+
+  copyBtn.addEventListener("click", function () {
+    copyText(shown).then(
+      function () {
+        copyBtn.textContent = "Kimásolva";
+      },
+      function () {
+        copyBtn.textContent = "Nem sikerült";
+      },
+    );
+    setTimeout(function () {
+      copyBtn.textContent = "Másolás";
+    }, 1800);
+  });
 }
 
-const phoneLink = document.getElementById("phoneLink");
-if (phoneLink) {
-  setupContactLink(
-    phoneLink,
-    document.getElementById("phoneText"),
-    "tel:",
-    () => phoneLink.dataset.p,
-    (num) => num.replace("+36", "+36 ").replace(/(\d{2})(\d{3})(\d{4})$/, "$1 $2 $3")
-  );
-}
+setupContact(
+  "emailLink",
+  "emailText",
+  function (link) {
+    const addr = link.dataset.u + "@" + link.dataset.d;
+    return { display: addr, href: "mailto:" + addr };
+  },
+  "E-mail írása: ",
+);
+
+setupContact(
+  "phoneLink",
+  "phoneText",
+  function (link) {
+    const num = link.dataset.p;
+    return {
+      display: num
+        .replace("+36", "+36 ")
+        .replace(/(\d{2})(\d{3})(\d{4})$/, "$1 $2 $3"),
+      href: "tel:" + num,
+    };
+  },
+  "Telefonhívás: ",
+);
 
 const contactForm = document.getElementById("contactForm");
 const formStatus = document.getElementById("formStatus");
@@ -230,18 +279,20 @@ if (contactForm && formStatus) {
       const res = await fetch(contactForm.action, {
         method: "POST",
         body: data,
-        headers: { Accept: "application/json" }
+        headers: { Accept: "application/json" },
       });
       if (res.ok) {
         formStatus.textContent = "Köszönöm az üzenetet! Hamarosan válaszolok.";
         formStatus.classList.add("ok");
         contactForm.reset();
       } else {
-        formStatus.textContent = "Hiba történt a küldés közben - próbáld újra, vagy írj e-mailt.";
+        formStatus.textContent =
+          "Hiba történt a küldés közben - próbáld újra, vagy írj e-mailt.";
         formStatus.classList.add("err");
       }
     } catch (err) {
-      formStatus.textContent = "Hiba történt a küldés közben - próbáld újra, vagy írj e-mailt.";
+      formStatus.textContent =
+        "Hiba történt a küldés közben - próbáld újra, vagy írj e-mailt.";
       formStatus.classList.add("err");
     }
   });
