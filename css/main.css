@@ -36,6 +36,12 @@
 .blog-guide-steps code { font-size: 13px; background: var(--white); padding: 2px 6px; border-radius: 4px; }
 .blog-guide-note { font-size: 12.5px; color: var(--muted); line-height: 1.55; margin: 0; }
 
+@media (max-width:700px) {
+  .hero-art:not(.hero-art-faint) {
+    object-position: left bottom;
+  }
+}
+
 /* Blogbejegyzések tartalma: az admin.html által generált elemek (alcím, lista, kép, link) */
 .blog-body h2 { font-size: 24px; font-weight: 800; letter-spacing: -0.01em; color: var(--ink); margin: 36px 0 14px; }
 .blog-body h2:first-child { margin-top: 0; }
