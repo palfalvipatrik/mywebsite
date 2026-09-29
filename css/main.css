@@ -153,7 +153,7 @@
   }
 }
 
-/* Zumba órák: főoldali kiemelés és részletes időpontkártya */
+/* Zumba órák: részletes időpontkártya */
 
 
 .zumba-class-info { padding: 48px 0 0; }
@@ -260,7 +260,7 @@
   margin-bottom: 7px;
   color: var(--muted);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
 }
 .zumba-schedule-time .zumba-countdown-grid {
   display: flex;
@@ -310,4 +310,184 @@
   .zumba-schedule-time .zumba-countdown-unit + .zumba-countdown-unit::before { margin-right: 4px; }
   .zumba-schedule-time .zumba-countdown-unit span { font-size: 18px; }
   .zumba-schedule-time .zumba-countdown-unit small { font-size: 11px; }
+}
+
+/* Typográfiai rendszer: karakteres, natív címbetűk és jól olvasható UI-szöveg. */
+:root {
+  --font-display: "Baloo 2", "Trebuchet MS", sans-serif;
+  --font-body: "Nunito Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --text-body: 1rem;
+  --text-control: 0.9rem;
+  --text-small: 0.8rem;
+  --text-label: 0.7rem;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --leading-body: 1.68;
+  --leading-heading: 1.16;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  font-weight: var(--weight-regular);
+  letter-spacing: 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display);
+  line-height: var(--leading-heading);
+  text-wrap: pretty;
+}
+
+.hero:not(.hero-compact) h1 {
+  font-size: clamp(2.25rem, 4.2vw, 3.35rem);
+  font-weight: var(--weight-bold);
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+}
+
+.blog-post-header h1 {
+  font-size: clamp(1.9rem, 3.4vw, 2.55rem);
+  font-weight: var(--weight-bold);
+  line-height: 1.12;
+  letter-spacing: -0.025em;
+}
+
+.page-404 h1 {
+  font-size: clamp(3.5rem, 9vw, 5.5rem);
+  font-weight: var(--weight-bold);
+  letter-spacing: -0.055em;
+}
+
+.sec-head h2,
+.about-copy h2,
+.sec-title-lg,
+.sec-title-md,
+.blog-body h2,
+.blog-guide h2 {
+  font-weight: var(--weight-bold);
+  line-height: 1.16;
+  letter-spacing: -0.025em;
+}
+
+.sec-head h2 { font-size: clamp(1.9rem, 3.2vw, 2.25rem); }
+.about-copy h2 { font-size: clamp(1.75rem, 2.8vw, 2rem); }
+.sec-title-lg { font-size: clamp(2.15rem, 4vw, 2.75rem); }
+.sec-title-md { font-size: clamp(1.7rem, 3vw, 1.95rem); }
+.blog-body h2 { font-size: clamp(1.4rem, 2.6vw, 1.65rem); }
+.blog-guide h2 { font-size: 1.2rem; }
+
+.side-card h3,
+.contact-card h3,
+.link-card h3,
+.cta-title {
+  font-family: var(--font-body);
+  font-weight: var(--weight-semibold);
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+}
+
+.news-title {
+  font-family: var(--font-display);
+  font-weight: var(--weight-semibold);
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+}
+
+.side-card h3,
+.contact-card h3,
+.cta-title { font-size: 1.25rem; }
+.link-card h3 { font-size: 1rem; }
+.news-title { font-size: 1.18rem; }
+
+.hero-roles {
+  font-size: clamp(1rem, 1.4vw, 1.075rem);
+  line-height: 1.58;
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.005em;
+}
+.hero-roles b { font-weight: var(--weight-semibold); }
+
+.about-copy p,
+.article p,
+.blog-body p,
+.sec-head p,
+.contact-card > p,
+.munkam-cta p,
+.zumba-class-intro p,
+.zumba-class-contact > p {
+  font-size: 1rem;
+  line-height: var(--leading-body);
+  font-weight: var(--weight-regular);
+  letter-spacing: 0;
+}
+
+.nav-links { font-size: var(--text-control); font-weight: var(--weight-medium); letter-spacing: 0.005em; }
+.nav-links a.active { font-weight: var(--weight-semibold); }
+.logo {
+  font-family: var(--font-body);
+  font-size: 1.125rem;
+  font-weight: var(--weight-bold);
+  letter-spacing: -0.025em;
+}
+.btn,
+.nav-links-cta a {
+  font-family: var(--font-body);
+  font-size: var(--text-control);
+  font-weight: var(--weight-semibold);
+  line-height: 1.3;
+  letter-spacing: 0.005em;
+}
+
+.eyebrow,
+.side-label,
+.zumba-schedule-item > span,
+.video-badge {
+  font-family: var(--font-body);
+  font-size: var(--text-label);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.09em;
+}
+
+.topbar { font-size: var(--text-small); }
+.news-date,
+.blog-post-meta,
+.page-back,
+.side-date-label,
+.side-date-value,
+.blog-guide-note,
+.footer-bottom {
+  font-size: var(--text-small);
+  line-height: 1.5;
+}
+.news-excerpt,
+.blog-body p { font-size: 0.97rem; }
+
+.zumba-class-intro h2 {
+  font-size: clamp(1.65rem, 2.6vw, 2rem);
+  font-weight: var(--weight-bold);
+  line-height: 1.16;
+  letter-spacing: -0.02em;
+}
+.zumba-schedule-item strong { font-size: 1rem; font-weight: var(--weight-semibold); line-height: 1.4; }
+.zumba-schedule-time strong { font-family: var(--font-display); font-size: 1.4rem; font-weight: var(--weight-semibold); letter-spacing: -0.02em; }
+.zumba-schedule-time .zumba-countdown-unit span { font-weight: var(--weight-bold); }
+.zumba-countdown-title,
+.zumba-countdown-unit small,
+.zumba-countdown-done { font-family: var(--font-body); }
+
+@media (max-width: 700px) {
+  .hero:not(.hero-compact) h1 { font-size: clamp(1.9rem, 7.5vw, 2.35rem); }
+  .blog-post-header h1 { font-size: clamp(1.9rem, 7.5vw, 2.2rem); }
+  .sec-head h2 { font-size: clamp(1.75rem, 7vw, 2rem); }
+  .zumba-class-intro h2 { font-size: clamp(1.55rem, 6.2vw, 1.8rem); }
+  .news-title { font-size: 1.1rem; }
 }
