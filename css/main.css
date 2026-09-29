@@ -491,3 +491,9 @@ h6 {
   .zumba-class-intro h2 { font-size: clamp(1.55rem, 6.2vw, 1.8rem); }
   .news-title { font-size: 1.1rem; }
 }
+
+.btn-icon {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+}
