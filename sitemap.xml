@@ -8,11 +8,17 @@
   </url>
   <url>
     <loc>https://palfalvipatrik.hu/blog/</loc>
-    <lastmod>2026-09-28</lastmod>
+    <lastmod>2026-09-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <!-- POSTS:START -->
+  <url>
+    <loc>https://palfalvipatrik.hu/blog/zumba-orak-novembertol/</loc>
+    <lastmod>2026-09-29</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.6</priority>
+  </url>
   <url>
     <loc>https://palfalvipatrik.hu/blog/megujult-az-oldalam/</loc>
     <lastmod>2026-09-28</lastmod>

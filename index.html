@@ -45,6 +45,8 @@
       Marketing
     </title>
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Pálfalvi Patrik" />
+    <meta property="og:locale" content="hu_HU" />
     <meta property="og:url" content="https://palfalvipatrik.hu/" />
     <meta
       property="og:title"
@@ -58,6 +60,7 @@
       property="og:image"
       content="https://palfalvipatrik.hu/assets/profile.webp"
     />
+    <meta property="og:image:alt" content="Pálfalvi Patrik portréja" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta
       name="twitter:title"
@@ -71,7 +74,66 @@
       name="twitter:image"
       content="https://palfalvipatrik.hu/assets/profile.webp"
     />
-    <script type="application/ld+json" src="schema/site-graph.json"></script>
+    <meta name="twitter:image:alt" content="Pálfalvi Patrik portréja" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Person",
+            "@id": "https://palfalvipatrik.hu/#person",
+            "name": "Pálfalvi Patrik",
+            "url": "https://palfalvipatrik.hu/",
+            "image": "https://palfalvipatrik.hu/assets/profile.webp",
+            "jobTitle": "Zumba oktató",
+            "knowsAbout": [
+              "Zumba",
+              "ASMR",
+              "Network marketing",
+              "Tartalomgyártás"
+            ],
+            "nationality": {
+              "@type": "Country",
+              "name": "Magyarország"
+            },
+            "areaServed": {
+              "@type": "Country",
+              "name": "Magyarország"
+            },
+            "sameAs": [
+              "https://www.youtube.com/@palfalvipatrik4115",
+              "https://www.youtube.com/@patrikasmr4140",
+              "https://www.instagram.com/p.__.patrik/",
+              "https://www.facebook.com/profile.php?id=61562793493929"
+            ]
+          },
+          {
+            "@type": "ProfessionalService",
+            "@id": "https://palfalvipatrik.hu/#zumba-service",
+            "name": "Pálfalvi Patrik - Zumba® oktatás",
+            "url": "https://palfalvipatrik.hu/#zumba",
+            "description": "Hivatalos Zumba® Instructor - tánc, mozgás és életöröm.",
+            "areaServed": {
+              "@type": "Country",
+              "name": "Magyarország"
+            },
+            "provider": {
+              "@id": "https://palfalvipatrik.hu/#person"
+            }
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://palfalvipatrik.hu/#website",
+            "url": "https://palfalvipatrik.hu/",
+            "name": "Pálfalvi Patrik",
+            "inLanguage": "hu",
+            "publisher": {
+              "@id": "https://palfalvipatrik.hu/#person"
+            }
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <a href="#top" class="skip-link">Ugrás a tartalomra</a>
@@ -92,12 +154,6 @@
             </svg>
 
             <span id="emailText">E-mail megjelenítése</span>
-
-            <span hidden data-r="gmail"></span>
-            <span hidden data-v=".flp"></span>
-            <span hidden data-k="patrik"></span>
-            <span hidden data-q=".com"></span>
-            <span hidden data-b="palfalvi"></span>
           </a>
 
           <a href="#" id="phoneLink">
@@ -114,11 +170,6 @@
 
             <span id="phoneText">Telefonszám megjelenítése</span>
 
-            <span hidden data-x="69"></span>
-            <span hidden data-m="36"></span>
-            <span hidden data-q="10"></span>
-            <span hidden data-r="148"></span>
-            <span hidden data-b="70"></span>
           </a>
         </div>
       </div>
@@ -232,13 +283,15 @@
         <section
           class="zumba-class-info"
           id="zumba-orak"
+          data-start="2026-11-05T18:00"
+          data-end="19:00"
           aria-labelledby="zumba-classes-title"
         >
           <div class="wrap">
             <div class="zumba-class-card">
               <div class="zumba-class-intro">
                 <span class="eyebrow">CSATLAKOZZ HOZZÁM</span>
-                <h2 id="zumba-classes-title">
+                <h2 id="zumba-classes-title" data-zumba-fill="heading">
                   November 5-én indulnak a Zumba órák!
                 </h2>
                 <p>
@@ -250,15 +303,15 @@
               <div class="zumba-schedule" aria-label="A Zumba órák időpontja">
                 <div class="zumba-schedule-item">
                   <span>INDULÁS</span>
-                  <strong>2026. november 5.</strong>
+                  <strong data-zumba-fill="date">2026. november 5.</strong>
                 </div>
                 <div class="zumba-schedule-item">
                   <span>GYAKORISÁG</span>
-                  <strong>Minden csütörtökön</strong>
+                  <strong data-zumba-fill="weekday">Minden csütörtökön</strong>
                 </div>
                 <div class="zumba-schedule-item zumba-schedule-time">
                   <span>IDŐPONT</span>
-                  <strong>18:00-19:00</strong>
+                  <strong data-zumba-fill="time">18:00-19:00</strong>
                   <div
                     class="zumba-countdown"
                     id="zumbaCountdown"
