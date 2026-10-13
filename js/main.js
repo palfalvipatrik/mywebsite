@@ -137,6 +137,14 @@ if (toTop) {
   });
 }
 
+/* Elérhetőségek - EGYETLEN helyen. Ha változik, csak itt kell átírni (az összes oldalra érvényes).
+   Darabokban tároljuk, futásidőben fűzzük össze (egyszerű spam-botok ellen). */
+const CONTACT_EMAIL_PARTS = ["palfalvi", ".", "patrik", ".flp", "@", "gmail", ".com"];
+const CONTACT_PHONE_PARTS = ["+", "36", "70", "148", "69", "05"];
+
+const getEmail = () => CONTACT_EMAIL_PARTS.join("");
+const getPhone = () => CONTACT_PHONE_PARTS.join("");
+
 async function copyText(text) {
   try {
     await navigator.clipboard.writeText(text);
@@ -241,13 +249,6 @@ function setupContactLink(link, textEl, scheme, getValue, format, copyLabel) {
 const emailLink = document.getElementById("emailLink");
 
 if (emailLink) {
-  const getEmail = () => {
-    const part = (name) =>
-      emailLink.querySelector(`[data-${name}]`)?.getAttribute(`data-${name}`) ?? "";
-
-    return part("b") + "." + part("k") + part("v") + "@" + part("r") + part("q");
-  };
-
   setupContactLink(
     emailLink,
     document.getElementById("emailText"),
@@ -261,23 +262,6 @@ if (emailLink) {
 const phoneLink = document.getElementById("phoneLink");
 
 if (phoneLink) {
-  function getPhone() {
-    const parts = {
-      a: phoneLink.querySelector("[data-m]")?.dataset.m,
-      b: phoneLink.querySelector("[data-b]")?.dataset.b,
-      c: phoneLink.querySelector("[data-r]")?.dataset.r,
-      d: phoneLink.querySelector("[data-x]")?.dataset.x,
-      e: phoneLink.querySelector("[data-q]")?.dataset.q,
-    };
-
-    return "+" + parts.a + parts.b + parts.c + parts.d + parts.e;
-  }
-
-  const zumbaPhoneLink = document.getElementById("zumbaPhoneLink");
-  if (zumbaPhoneLink) {
-    zumbaPhoneLink.href = "tel:" + getPhone();
-  }
-
   setupContactLink(
     phoneLink,
     document.getElementById("phoneText"),
@@ -289,51 +273,154 @@ if (phoneLink) {
   );
 }
 
+/* A "Hívj telefonon" gomb az első érintésig (egér ráhúzás, érintés, billentyűzetes fókusz) nem tartalmazza a számot.
+   Utána rendes tel: link: kattintásra hív, hosszú nyomásra / jobb klikkre másolható. */
+const zumbaPhoneLink = document.getElementById("zumbaPhoneLink");
+if (zumbaPhoneLink) {
+  const armPhoneLink = () => {
+    zumbaPhoneLink.href = "tel:" + getPhone();
+    ["pointerenter", "pointerdown", "touchstart", "focus"].forEach((type) =>
+      zumbaPhoneLink.removeEventListener(type, armPhoneLink),
+    );
+  };
+  ["pointerenter", "pointerdown", "touchstart", "focus"].forEach((type) =>
+    zumbaPhoneLink.addEventListener(type, armPhoneLink, { passive: true }),
+  );
+  /* Tartalék: ha valamiért még nincs beállítva a cím, a kattintás akkor is hív. */
+  zumbaPhoneLink.addEventListener("click", (e) => {
+    if (zumbaPhoneLink.getAttribute("href") === "#") {
+      e.preventDefault();
+      armPhoneLink();
+      window.location.href = zumbaPhoneLink.href;
+    }
+  });
+}
+
+/* Zumba órák: az indulás időpontját EGYETLEN helyen kell megadni, az index.html-ben:
+   <section id="zumba-orak" data-start="2026-11-05T18:00" data-end="19:00">
+   (budapesti idő; a nyári/téli időszámítást a böngésző kezeli).
+   Ebből számolódik a visszaszámláló, a dátum, a nap neve, az időpont és a címsor is. */
+const MONTHS_HU = [
+  "január", "február", "március", "április", "május", "június",
+  "július", "augusztus", "szeptember", "október", "november", "december",
+];
+const WEEKDAYS_HU = [
+  "vasárnap", "hétfőn", "kedden", "szerdán", "csütörtökön", "pénteken", "szombaton",
+];
+
+/* "5-én", "6-án", "1-jén": a magyar napnév-rag a szám kiejtésétől függ. */
+function dayWithSuffix(day) {
+  let suffix = "én";
+  if (day === 1) suffix = "jén";
+  else if (day === 2 || day === 20 || day === 30) suffix = "án";
+  else if ([3, 6, 8].includes(day % 10)) suffix = "án";
+  return `${day}-${suffix}`;
+}
+
+/* "ÉÉÉÉ-HH-NNTÓÓ:PP" budapesti falióra-idő -> UTC időbélyeg (DST-helyesen). */
+function budapestToTimestamp(text) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(text || "");
+  if (!m) return NaN;
+  const [y, mo, d, h, mi] = m.slice(1).map(Number);
+  const wall = Date.UTC(y, mo - 1, d, h, mi);
+  const fmt = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Europe/Budapest",
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  const offsetAt = (ts) => {
+    const p = Object.fromEntries(fmt.formatToParts(new Date(ts)).map((x) => [x.type, x.value]));
+    return Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute) - ts;
+  };
+  const first = wall - offsetAt(wall);
+  return wall - offsetAt(first);
+}
+
+const zumbaInfo = document.getElementById("zumba-orak");
 const zumbaCountdown = document.getElementById("zumbaCountdown");
 const zumbaCountdownDone = document.getElementById("zumbaCountdownDone");
 
-if (zumbaCountdown && zumbaCountdownDone) {
-  // Budapest is on CET (UTC+01:00) on 5 November 2026.
-  const firstZumbaClass = new Date("2026-11-05T18:00:00+01:00").getTime();
-  const countdownFields = {
-    days: zumbaCountdown.querySelector('[data-countdown="days"]'),
-    hours: zumbaCountdown.querySelector('[data-countdown="hours"]'),
-    minutes: zumbaCountdown.querySelector('[data-countdown="minutes"]'),
-    seconds: zumbaCountdown.querySelector('[data-countdown="seconds"]'),
-  };
-  let countdownInterval;
+if (zumbaInfo && zumbaInfo.dataset.start) {
+  const startText = zumbaInfo.dataset.start;
+  const firstZumbaClass = budapestToTimestamp(startText);
 
-  function updateZumbaCountdown() {
-    const millisecondsLeft = firstZumbaClass - Date.now();
+  if (!Number.isNaN(firstZumbaClass)) {
+    const [datePart, timePart] = startText.split("T");
+    const [y, mo, d] = datePart.split("-").map(Number);
+    const weekday = new Date(Date.UTC(y, mo - 1, d)).getUTCDay();
+    const monthName = MONTHS_HU[mo - 1];
+    const endTime = zumbaInfo.dataset.end;
 
-    if (millisecondsLeft <= 0) {
-      zumbaCountdown.hidden = true;
-      zumbaCountdownDone.hidden = false;
-      clearInterval(countdownInterval);
-      return;
+    const fill = {
+      heading: `${monthName[0].toUpperCase()}${monthName.slice(1)} ${dayWithSuffix(d)} indulnak a Zumba órák!`,
+      date: `${y}. ${monthName} ${d}.`,
+      weekday: `Minden ${WEEKDAYS_HU[weekday]}`,
+      time: endTime ? `${timePart}-${endTime}` : timePart,
+    };
+    zumbaInfo.querySelectorAll("[data-zumba-fill]").forEach((el) => {
+      const value = fill[el.dataset.zumbaFill];
+      if (value) el.textContent = value;
+    });
+
+    if (zumbaCountdown && zumbaCountdownDone) {
+      const countdownFields = {
+        days: zumbaCountdown.querySelector('[data-countdown="days"]'),
+        hours: zumbaCountdown.querySelector('[data-countdown="hours"]'),
+        minutes: zumbaCountdown.querySelector('[data-countdown="minutes"]'),
+        seconds: zumbaCountdown.querySelector('[data-countdown="seconds"]'),
+      };
+      let countdownInterval;
+
+      function updateZumbaCountdown() {
+        const millisecondsLeft = firstZumbaClass - Date.now();
+
+        if (millisecondsLeft <= 0) {
+          zumbaCountdown.hidden = true;
+          zumbaCountdownDone.hidden = false;
+          clearInterval(countdownInterval);
+          return;
+        }
+
+        const totalSeconds = Math.ceil(millisecondsLeft / 1000);
+        const days = Math.floor(totalSeconds / 86400);
+        const hours = Math.floor((totalSeconds % 86400) / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+
+        countdownFields.days.textContent = String(days);
+        countdownFields.hours.textContent = String(hours).padStart(2, "0");
+        countdownFields.minutes.textContent = String(minutes).padStart(2, "0");
+        countdownFields.seconds.textContent = String(seconds).padStart(2, "0");
+      }
+
+      updateZumbaCountdown();
+      if (!zumbaCountdown.hidden) {
+        countdownInterval = setInterval(updateZumbaCountdown, 1000);
+      }
     }
-
-    const totalSeconds = Math.ceil(millisecondsLeft / 1000);
-    const days = Math.floor(totalSeconds / 86400);
-    const hours = Math.floor((totalSeconds % 86400) / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-
-    countdownFields.days.textContent = String(days);
-    countdownFields.hours.textContent = String(hours).padStart(2, "0");
-    countdownFields.minutes.textContent = String(minutes).padStart(2, "0");
-    countdownFields.seconds.textContent = String(seconds).padStart(2, "0");
-  }
-
-  updateZumbaCountdown();
-  if (!zumbaCountdown.hidden) {
-    countdownInterval = setInterval(updateZumbaCountdown, 1000);
   }
 }
+
 const contactForm = document.getElementById("contactForm");
 const formStatus = document.getElementById("formStatus");
 if (contactForm && formStatus) {
   const gotcha = contactForm.querySelector('[name="_gotcha"]');
+
+  /* Hibánál az e-mail címet közvetlenül a hibaüzenet mellett mutatjuk, hogy ne kelljen keresgélni. */
+  const showFormError = () => {
+    const email = getEmail();
+    formStatus.textContent = "Hiba történt a küldés közben - próbáld újra, vagy írj e-mailt: ";
+    const mail = document.createElement("a");
+    mail.href = "mailto:" + email;
+    mail.textContent = email;
+    formStatus.append(mail);
+    formStatus.classList.add("err");
+  };
+
   contactForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     if (gotcha && gotcha.value) {
@@ -355,12 +442,10 @@ if (contactForm && formStatus) {
         formStatus.classList.add("ok");
         contactForm.reset();
       } else {
-        formStatus.textContent = "Hiba történt a küldés közben - próbáld újra, vagy írj e-mailt.";
-        formStatus.classList.add("err");
+        showFormError();
       }
     } catch (err) {
-      formStatus.textContent = "Hiba történt a küldés közben - próbáld újra, vagy írj e-mailt.";
-      formStatus.classList.add("err");
+      showFormError();
     }
   });
 }
