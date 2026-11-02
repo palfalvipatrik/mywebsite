@@ -304,6 +304,8 @@
   font-weight: 700;
 }
 .zumba-schedule-time .zumba-countdown-done[hidden] { display: none; }
+/* A .zumba-countdown display:flex-et kap, ami felülírná a hidden attribútumot, ezért kell ez a sor. */
+.zumba-schedule-time .zumba-countdown[hidden] { display: none; }
 
 @media (max-width: 700px) {
   .zumba-schedule-time .zumba-countdown-unit { gap: 3px; padding: 0 5px; }
