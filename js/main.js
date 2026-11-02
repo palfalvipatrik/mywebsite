@@ -296,10 +296,17 @@ if (zumbaPhoneLink) {
   });
 }
 
-/* Zumba órák: az indulás időpontját EGYETLEN helyen kell megadni, az index.html-ben:
-   <section id="zumba-orak" data-start="2026-11-05T18:00" data-end="19:00">
-   (budapesti idő; a nyári/téli időszámítást a böngésző kezeli).
-   Ebből számolódik a visszaszámláló, a dátum, a nap neve, az időpont és a címsor is. */
+/* Zumba órák. Minden adat EGYETLEN helyen van, az index.html-ben:
+   <section id="zumba-orak" data-start="2026-11-05T18:00" data-end="19:00" data-skip="">
+   - data-start: az ELSŐ óra kezdete, budapesti falióra-idő szerint
+   - data-end:   az óra vége (ÓÓ:PP, ugyanazon a napon)
+   - data-skip:  elmaradó napok ÉÉÉÉ-HH-NN formában, vesszővel elválasztva (nem kötelező),
+                 pl. data-skip="2026-12-24,2026-12-31"
+   Az óra hetente ugyanazon a napon és ugyanabban a budapesti órában ismétlődik.
+   Három állapot van, mindet a mostani időből számoljuk ki (nincs tárolt "lejárt" jelző):
+   1. az első óra előtt: "indulnak" címsor + visszaszámláló az első órára
+   2. óra közben: a visszaszámláló helyett "most zajlik" felirat
+   3. két óra között: visszaszámláló a KÖVETKEZŐ órára, a címsor már nem "indulnak"-ot mond */
 const MONTHS_HU = [
   "január", "február", "március", "április", "május", "június",
   "július", "augusztus", "szeptember", "október", "november", "december",
@@ -317,91 +324,140 @@ function dayWithSuffix(day) {
   return `${day}-${suffix}`;
 }
 
-/* "ÉÉÉÉ-HH-NNTÓÓ:PP" budapesti falióra-idő -> UTC időbélyeg (DST-helyesen). */
+const budapestFormat = new Intl.DateTimeFormat("en-US", {
+  timeZone: "Europe/Budapest",
+  hourCycle: "h23",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+});
+
+/* "ÉÉÉÉ-HH-NNTÓÓ:PP" budapesti falióra-idő -> UTC időbélyeg (DST-helyesen).
+   Az eltolást (UTC+1 / UTC+2) a böngésző tudja, nem mi számoljuk. */
 function budapestToTimestamp(text) {
   const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(text || "");
   if (!m) return NaN;
   const [y, mo, d, h, mi] = m.slice(1).map(Number);
   const wall = Date.UTC(y, mo - 1, d, h, mi);
-  const fmt = new Intl.DateTimeFormat("en-US", {
-    timeZone: "Europe/Budapest",
-    hourCycle: "h23",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
   const offsetAt = (ts) => {
-    const p = Object.fromEntries(fmt.formatToParts(new Date(ts)).map((x) => [x.type, x.value]));
+    const p = Object.fromEntries(budapestFormat.formatToParts(new Date(ts)).map((x) => [x.type, x.value]));
     return Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour, +p.minute) - ts;
   };
   const first = wall - offsetAt(wall);
   return wall - offsetAt(first);
 }
 
+const pad2 = (n) => String(n).padStart(2, "0");
+const toMinutes = (t) => {
+  const [h, m] = t.split(":").map(Number);
+  return h * 60 + m;
+};
+
 const zumbaInfo = document.getElementById("zumba-orak");
-const zumbaCountdown = document.getElementById("zumbaCountdown");
-const zumbaCountdownDone = document.getElementById("zumbaCountdownDone");
+const firstStart = zumbaInfo ? budapestToTimestamp(zumbaInfo.dataset.start) : NaN;
 
-if (zumbaInfo && zumbaInfo.dataset.start) {
-  const startText = zumbaInfo.dataset.start;
-  const firstZumbaClass = budapestToTimestamp(startText);
+if (!Number.isNaN(firstStart)) {
+  const [datePart, timePart] = zumbaInfo.dataset.start.split("T");
+  const [y, mo, d] = datePart.split("-").map(Number);
+  const endTime = zumbaInfo.dataset.end;
+  const skip = new Set(
+    (zumbaInfo.dataset.skip || "").split(",").map((s) => s.trim()).filter(Boolean),
+  );
+  const weekday = new Date(Date.UTC(y, mo - 1, d)).getUTCDay();
+  const minutes = endTime ? toMinutes(endTime) - toMinutes(timePart) : 60;
+  const durationMs = (minutes > 0 ? minutes : 60) * 60000;
+  const WEEK_MS = 7 * 24 * 3600 * 1000;
 
-  if (!Number.isNaN(firstZumbaClass)) {
-    const [datePart, timePart] = startText.split("T");
-    const [y, mo, d] = datePart.split("-").map(Number);
-    const weekday = new Date(Date.UTC(y, mo - 1, d)).getUTCDay();
-    const monthName = MONTHS_HU[mo - 1];
-    const endTime = zumbaInfo.dataset.end;
+  /* Az első olyan alkalom, ami MÉG NEM ért véget. Az N-edik alkalmat naptári nappal számoljuk
+     (első nap + 7*N nap), és minden alkalomra külön alakítjuk át a budapesti órát időbélyeggé.
+     Nem "+ 7*24 óra"-t adunk hozzá, mert az óraátállításnál egy hét 167 vagy 169 óra,
+     és akkor az óra egy órát csúszna. */
+  function findOccurrence(now) {
+    let n = Math.max(0, Math.floor((now - firstStart) / WEEK_MS) - 1);
+    for (let i = 0; i < 200; i++, n++) {
+      const day = new Date(Date.UTC(y, mo - 1, d + 7 * n));
+      const oy = day.getUTCFullYear();
+      const om = day.getUTCMonth() + 1;
+      const od = day.getUTCDate();
+      const key = `${oy}-${pad2(om)}-${pad2(od)}`;
+      if (skip.has(key)) continue;
+      const start = budapestToTimestamp(`${key}T${timePart}`);
+      const end = start + durationMs;
+      if (end > now) return { key, mo: om, d: od, y: oy, start, end };
+    }
+    return null; /* biztonsági korlát: ne legyen végtelen ciklus hibás adatnál */
+  }
 
-    const fill = {
-      heading: `${monthName[0].toUpperCase()}${monthName.slice(1)} ${dayWithSuffix(d)} indulnak a Zumba órák!`,
-      date: `${y}. ${monthName} ${d}.`,
-      weekday: `Minden ${WEEKDAYS_HU[weekday]}`,
-      time: endTime ? `${timePart}-${endTime}` : timePart,
-    };
-    zumbaInfo.querySelectorAll("[data-zumba-fill]").forEach((el) => {
-      const value = fill[el.dataset.zumbaFill];
-      if (value) el.textContent = value;
+  const zumbaCountdown = document.getElementById("zumbaCountdown");
+  const zumbaCountdownDone = document.getElementById("zumbaCountdownDone");
+  const countdownFields = zumbaCountdown && {
+    days: zumbaCountdown.querySelector('[data-countdown="days"]'),
+    hours: zumbaCountdown.querySelector('[data-countdown="hours"]'),
+    minutes: zumbaCountdown.querySelector('[data-countdown="minutes"]'),
+    seconds: zumbaCountdown.querySelector('[data-countdown="seconds"]'),
+  };
+
+  const fill = (name, value) => {
+    zumbaInfo.querySelectorAll(`[data-zumba-fill="${name}"]`).forEach((el) => {
+      el.textContent = value;
     });
+  };
 
-    if (zumbaCountdown && zumbaCountdownDone) {
-      const countdownFields = {
-        days: zumbaCountdown.querySelector('[data-countdown="days"]'),
-        hours: zumbaCountdown.querySelector('[data-countdown="hours"]'),
-        minutes: zumbaCountdown.querySelector('[data-countdown="minutes"]'),
-        seconds: zumbaCountdown.querySelector('[data-countdown="seconds"]'),
-      };
-      let countdownInterval;
+  let occurrence = null;
+  let shownState = "";
 
-      function updateZumbaCountdown() {
-        const millisecondsLeft = firstZumbaClass - Date.now();
+  function renderZumba(now) {
+    if (!occurrence || now >= occurrence.end) occurrence = findOccurrence(now);
 
-        if (millisecondsLeft <= 0) {
-          zumbaCountdown.hidden = true;
-          zumbaCountdownDone.hidden = false;
-          clearInterval(countdownInterval);
-          return;
-        }
+    if (!occurrence) {
+      if (zumbaCountdown) zumbaCountdown.hidden = true;
+      if (zumbaCountdownDone) zumbaCountdownDone.hidden = true;
+      return false;
+    }
 
-        const totalSeconds = Math.ceil(millisecondsLeft / 1000);
-        const days = Math.floor(totalSeconds / 86400);
-        const hours = Math.floor((totalSeconds % 86400) / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-        const seconds = totalSeconds % 60;
+    const live = now >= occurrence.start;
+    const beforeLaunch = now < firstStart;
 
-        countdownFields.days.textContent = String(days);
-        countdownFields.hours.textContent = String(hours).padStart(2, "0");
-        countdownFields.minutes.textContent = String(minutes).padStart(2, "0");
-        countdownFields.seconds.textContent = String(seconds).padStart(2, "0");
-      }
+    /* A szövegeket csak állapotváltáskor írjuk át, nem másodpercenként. */
+    const state = `${occurrence.key}|${live}|${beforeLaunch}`;
+    if (state !== shownState) {
+      shownState = state;
+      const firstMonth = MONTHS_HU[mo - 1];
+      const occMonth = MONTHS_HU[occurrence.mo - 1];
 
-      updateZumbaCountdown();
-      if (!zumbaCountdown.hidden) {
-        countdownInterval = setInterval(updateZumbaCountdown, 1000);
+      fill(
+        "heading",
+        beforeLaunch
+          ? `${firstMonth[0].toUpperCase()}${firstMonth.slice(1)} ${dayWithSuffix(d)} indulnak a Zumba órák!`
+          : `Minden ${WEEKDAYS_HU[weekday]} Zumba óra!`,
+      );
+      fill("dateLabel", beforeLaunch ? "INDULÁS" : live ? "MOST ZAJLIK" : "KÖVETKEZŐ ÓRA");
+      fill("date", `${occurrence.y}. ${occMonth} ${occurrence.d}.`);
+      fill("weekday", `Minden ${WEEKDAYS_HU[weekday]}`);
+      fill("time", endTime ? `${timePart}-${endTime}` : timePart);
+      fill("countdownTitle", beforeLaunch ? "Első Zumba óráig hátralévő idő" : "Következő Zumba óráig hátralévő idő");
+
+      if (zumbaCountdown && zumbaCountdownDone) {
+        zumbaCountdown.hidden = live;
+        zumbaCountdownDone.hidden = !live;
       }
     }
+
+    if (!live && countdownFields) {
+      const totalSeconds = Math.ceil((occurrence.start - now) / 1000);
+      countdownFields.days.textContent = String(Math.floor(totalSeconds / 86400));
+      countdownFields.hours.textContent = pad2(Math.floor((totalSeconds % 86400) / 3600));
+      countdownFields.minutes.textContent = pad2(Math.floor((totalSeconds % 3600) / 60));
+      countdownFields.seconds.textContent = pad2(totalSeconds % 60);
+    }
+    return true;
+  }
+
+  /* Az óra hetente ismétlődik, ezért a számlálót nem állítjuk le soha. */
+  if (renderZumba(Date.now())) {
+    setInterval(() => renderZumba(Date.now()), 1000);
   }
 }
 
