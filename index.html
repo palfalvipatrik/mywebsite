@@ -285,6 +285,7 @@
           id="zumba-orak"
           data-start="2026-11-05T18:00"
           data-end="19:00"
+          data-skip=""
           aria-labelledby="zumba-classes-title"
         >
           <div class="wrap">
@@ -302,7 +303,7 @@
               </div>
               <div class="zumba-schedule" aria-label="A Zumba órák időpontja">
                 <div class="zumba-schedule-item">
-                  <span>INDULÁS</span>
+                  <span data-zumba-fill="dateLabel">INDULÁS</span>
                   <strong data-zumba-fill="date">2026. november 5.</strong>
                 </div>
                 <div class="zumba-schedule-item">
@@ -317,12 +318,12 @@
                     id="zumbaCountdown"
                     aria-live="off"
                   >
-                    <span class="zumba-countdown-title"
+                    <span class="zumba-countdown-title" data-zumba-fill="countdownTitle"
                       >Első Zumba óráig hátralévő idő</span
                     >
                     <div
                       class="zumba-countdown-grid"
-                      aria-label="Visszaszámlálás az első Zumba óráig"
+                      aria-label="Visszaszámlálás a Zumba óráig"
                     >
                       <span class="zumba-countdown-unit"
                         ><span data-countdown="days">0</span
@@ -347,7 +348,7 @@
                     id="zumbaCountdownDone"
                     hidden
                   >
-                    🎉 Elindultak a Zumba órák!
+                    Jelenleg épp zajlik az óra
                   </p>
                 </div>
               </div>
@@ -1083,7 +1084,7 @@
           <path d="M15 18l-6-6 6-6" />
         </svg>
       </button>
-      <img class="lightbox-img" id="lbImg" src="" alt="" />
+      <img class="lightbox-img" id="lbImg" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="" />
       <button class="lightbox-next" id="lbNext" aria-label="Következő kép">
         <svg
           viewBox="0 0 24 24"
